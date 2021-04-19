@@ -142,7 +142,7 @@ let inSearch = (msgOld) => {
       // arr.filter((e) => {
       //   return e.id != userId;
       // });
-      console.log(arr);
+      // console.log(arr);
 
       // bot.sendPhoto(userId, "")
       //"history": {
@@ -170,12 +170,12 @@ let inSearch = (msgOld) => {
 
                   
                     bot.sendPhoto(userId, prev["photo"], {
-                      caption: `[${prev.name}](tg://user?id=${prev.id})  -  ${prev.age} \n\n${prev.description}\n\n"О, вітаю. В тебе 1 нова взаємна симпатія.💖 Натискай на ім'я і починай спілкування!👇🏻`,
+                      caption: `[${prev.name}](tg://user?id=${prev.id})  -  ${prev.age} \n\n${prev.description}\n\nО, вітаю. В тебе 1 нова взаємна симпатія.💖 Натискай на ім'я і починай спілкування!👇🏻`,
                       parseMode: "Markdown"
                       
                     });
                     bot.sendPhoto(prev["id"], user["photo"], {
-                      caption: `[${user.name}](tg://user?id=${user.id})  -  ${user.age} \n\n${user.description}\n\n"О, вітаю. В тебе 1 нова взаємна симпатія.💖 Натискай на ім'я і починай спілкування!👇🏻`,
+                      caption: `[${user.name}](tg://user?id=${user.id})  -  ${user.age} \n\n${user.description}\n\nО, вітаю. В тебе 1 нова взаємна симпатія.💖 Натискай на ім'я і починай спілкування!👇🏻`,
                       parseMode: "Markdown"
                     });
                     console.log("just wait...");
@@ -236,7 +236,7 @@ let myProfile = (msgOld) => {
   
   userPromise.then((res) => { 
     user = res;
-    bot.sendPhoto(userId, "" + user.photo, {
+    bot.sendPhoto(userId, user.photo, {
       caption: `Ім'я: [${user["name"]}](tg://user?id=${userId})\n\nВік: ${user["age"]} \n\nОпис: ${user["description"]}\n\nСтать: ${user["gender"] == "male"? "чоловіча":"жіноча"}\n\nШукаю: ${user["looking_for"] == "male"? "хлопця" :  user["looking_for"] == "both"? "без різниці" : "дівчину"}`,
       parseMode: "Markdown",
       replyMarkup: {
