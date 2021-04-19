@@ -179,7 +179,6 @@ bot.on(/Зареєструватись!/, (msg)=> {
   let userId = msg.from.id;
   const newUser = db.getUserByID("" + userId);
   newUser.then((res) => {
-    // console.log(res);
     if (res == null) {
       if (msg.from.username == undefined) {
         bot.sendMessage(userId, "Вибач, але щоб зареєструватись в тебе має бути псевдонім, але його немає 😔\n[Ось інструкція як його створити](https://youtu.be/RtxySv4ANDU?t=23)", {
