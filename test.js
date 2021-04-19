@@ -33,12 +33,12 @@ async function getUserByID(IDf) {
 async function findAllMatched(user) {
     let a = [], i = 0;
     try {
-        // await client.connect();
+        await client.connect();
         const database = client.db("usersdb");
         const collection = database.collection("users");
         let atrib = { active: true };
         if (user.looking_for == 'both') {
-            atrib = { active: true, $or: [{ looking_for: 'both' }, { looking_for: user.gender }] };
+            atrib = { id: {$ne : user.id } , active: true, $or: [{ looking_for: 'both' }, { looking_for: user.gender }] };
         }
         else {
             atrib = { active: true, gender: user.looking_for, $or: [{ looking_for: 'both' }, { looking_for: user.gender }] };
@@ -53,7 +53,7 @@ async function findAllMatched(user) {
             i++;
         });
     } finally {
-        // await client.close();
+        //await client.close();
         return a;
     }
 }

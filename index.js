@@ -47,6 +47,25 @@ const bot = new TeleBot("1761355313:AAG-bKTHdZOwe5Vj54xTLbMdy5BWrcUYNg4");
 // }
 // `
 
+
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  while (0 !== currentIndex) {
+
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+
+
+
 let started = {
 
 };
@@ -80,7 +99,7 @@ bot.on("/start", (msg) => {
            text: 'Зареєструватись!', // текст на кнопке
          }
        ]
-     ],
+      ],
      resize_keyboard: true,
      one_time_keyboard: true
       }   
@@ -88,7 +107,7 @@ bot.on("/start", (msg) => {
   }
   else {
     setTimeout(() => {
-      mainMenu(msg);
+      bot.sendMessage(msg.from.id, "Ти мене вже запустив, одного разу достатньо :)");
     }, 1000);
   }
      
@@ -98,14 +117,113 @@ bot.on("/start", (msg) => {
 
 //  KEYBOARDS
 
+const keybSearch =  {
+    keyboard: [ ["❤️", "💔", "Закінчити"]],
+    resize_keyboard: true,
+    one_time_keyboard: true
+  }
+
+
 let inSearch = (msgOld) => {
-  bot.sendMessage(msgOld.from.id, `не тикай поки сюди`, {
-    replyMarkup: {
-      keyboard: [ ["Перейти в головне меню"] ],
-      resize_keyboard: true,
-      one_time_keyboard: true
-    } 
+
+  let isSearch = true;
+  let userId = msgOld.from.id;
+  let i = 0;
+  let partner;
+  let prev;
+  let userPr = db.getUserByID("" + userId);
+  userPr.then((user) => {
+
+    console.log(user);
+    let uHistory = user["history"];
+    const arrayPr = db.findAllMatched(user);
+    arrayPr.then((arr) => {
+      arr = shuffle(arr);
+      // arr.filter((e) => {
+      //   return e.id != userId;
+      // });
+      console.log(arr);
+
+      // bot.sendPhoto(userId, "")
+      //"history": {
+        //       "id1": true,
+        //       "id2": false
+        //   }
+       
+      
+
+      bot.on("*", (msg) => {
+        // console.log("keeeeek");
+        if (isSearch && msg.text != undefined && msg.text.charAt(0) != "/") {
+          if (msg.from.id == userId && arr.length >= i) {
+            if (msg.text != "Закінчити" && arr.length != i) {
+              // console.log("keeeeek");
+              
+              if (msg.text == "❤️" || msg.text == "💔") {
+                prev = arr[i - 1];
+                
+                uHistory["" + `${prev["id"]}`] = msg.text == "❤️"? true : false;
+
+                if (msg.text == "❤️" && prev["history"]["" + userId]) {
+                  // setTimeout(() => {
+                  
+
+                  
+                    bot.sendPhoto(userId, prev["photo"], {
+                      caption: `[${prev.name}](tg://user?id=${prev.id})  -  ${prev.age} \n\n${prev.description}\n\n"О, вітаю. В тебе 1 нова взаємна симпатія.💖 Натискай на ім'я і починай спілкування!👇🏻`,
+                      parseMode: "Markdown"
+                      
+                    });
+                    bot.sendPhoto(prev["id"], user["photo"], {
+                      caption: `[${user.name}](tg://user?id=${user.id})  -  ${user.age} \n\n${user.description}\n\n"О, вітаю. В тебе 1 нова взаємна симпатія.💖 Натискай на ім'я і починай спілкування!👇🏻`,
+                      parseMode: "Markdown"
+                    });
+                    console.log("just wait...");
+                    // }, 500);
+                }
+              }
+              partner = arr[i];
+              // if (uHistory[`${partner["id"]}`] == undefined && userId != "" + partner.id) {
+                bot.sendPhoto(userId, partner["photo"], {
+                  caption: `${partner.name}  -  ${partner.age} \n\n${partner.description}`,
+                  parseMode: "Markdown",
+                  replyMarkup: keybSearch           
+                });
+              // }
+              i++;
+            }
+            else {
+              user["history"] = uHistory;
+              db.updateData(user);
+              if (msg.text != "Закінчити") bot.sendMessage(userId, "На жаль, я показав тобі все що міг 🥺❤️");
+              isSearch = false;
+              setTimeout(() => {
+                mainMenu(msg);
+              }, 500);
+            }
+          }
+        }
+        else {
+          isSearch = false;
+        }
+      });
+      console.log(userId);
+      bot.sendMessage(userId, "Ну що, починаємо пошук?", {
+        replyMarkup: {
+          keyboard: [ ["🚀"] ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+      
+    });
+
+
   });
+  
+  
+
+
   // setTimeout(() => {
     
   // }, 500);
@@ -128,6 +246,202 @@ let myProfile = (msgOld) => {
       } 
     });
   });
+}
+
+bot.on(/Редагувати анкету/, (msg) => {
+  changeProfile(msg);
+});
+
+let changeProfile = (msgOld) => {
+
+  let userId = msgOld.from.id;
+  let isChange = true;
+  let inChange = "";
+  let step = 0;
+  let userPr = db.getUserByID("" + userId);
+  userPr.then((user) => {
+    if (user["active"]) {
+      bot.sendMessage(userId, " МЕНЮ РЕДАГУВАННЯ\nЩо будемо змінювати?", {
+        replyMarkup: {
+          keyboard: [ ["Ім'я", "Вік"], ["Опис", "Пройти реєстрацію заново", "Очистити історію пошуку"], ["Зупинити пошук", "Назад"] ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+    }
+    else {
+      bot.sendMessage(userId, " МЕНЮ РЕДАГУВАННЯ\nЩо будемо змінювати?", {
+        replyMarkup: {
+          keyboard: [ ["Ім'я", "Вік"], ["Опис", "Пройти реєстрацію заново", "Очистити історію пошуку"], ["Відновити пошук", "Назад"] ],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+    }
+    
+    bot.on(/Очистити історію пошуку/, (msg) => {
+      if (isChange && msg.from.id == userId) {
+        isChange = false;
+        inChange = "";
+        user.history = {};
+        db.updateData(user);
+        bot.sendMessage(userId, "Дані успішно оновлені!", {
+          replyMarkup: {
+            remove_keyboard: true
+          }
+        });
+        setTimeout(() => {
+          changeProfile(msg);
+        }, 500);
+      }
+    });
+
+    bot.on(/Відновити пошук/, (msg) => {
+      if (isChange && msg.from.id == userId) {
+        isChange = false;
+        inChange = "";
+        user.active = true;
+        db.updateData(user);
+        bot.sendMessage(userId, "Дані успішно оновлені!", {
+          replyMarkup: {
+            remove_keyboard: true
+          }
+        });
+        setTimeout(() => {
+          changeProfile(msg);
+        }, 500);
+      }
+    });
+    
+    bot.on(/Зупинити пошук/, (msg) => {
+      if (isChange && msg.from.id == userId) {
+        isChange = false;
+        inChange = "";
+        user.active = false;
+        db.updateData(user);
+        bot.sendMessage(userId, "Дані успішно оновлені!", {
+          replyMarkup: {
+            remove_keyboard: true
+          }
+        });
+        setTimeout(() => {
+          changeProfile(msg);
+        }, 500);
+      }
+    });
+  
+    bot.on(/Пройти реєстрацію заново/, (msg) => {
+      if (isChange && msg.from.id == userId) {
+        isChange = false;
+        inChange = "";
+        setTimeout(() => {
+          registration(msg);
+        }, 500);
+      }
+    });
+  
+    bot.on(/Назад/, (msg) => {
+      if (isChange && msg.from.id == userId) {
+        isChange = false;
+        inChange = "";
+        
+        setTimeout(() => {
+          myProfile(msg);
+        }, 500);
+      }
+    });
+
+    bot.on('*', (msg) => {
+      if (msg.text != undefined) {
+        if (isChange && msg.from.id == userId) { 
+          if (msg.text.charAt(0) == "/") {
+            step = 3;
+            isChange = false;
+            inChange = "";
+          }
+          else {
+            switch(step) {
+              case 0:
+                switch(msg.text) {
+                  case "Ім'я":
+                    inChange = "name";
+                    bot.sendMessage(userId, "Введіть, будь ласка, ваше нове ім'я", {
+                      replyMarkup: {
+                        keyboard: [
+                          [
+                          { text: msgOld.from.first_name }
+                          ]
+                        ],
+                        resize_keyboard: true,
+                        one_time_keyboard: true
+                      }
+                    });
+                    step++;
+                    break;
+                  case 'Вік':
+                    inChange = "age";
+                    bot.sendMessage(userId, "Введіть, будь ласка, ваш новий вік", {
+                      replyMarkup: {
+                        remove_keyboard: true
+                      }
+                    });
+                    step++;
+                    break;
+                  case 'Опис':
+                    inChange = "description";
+                    bot.sendMessage(userId, "Введіть, будь ласка, ваш новий опис", {
+                      replyMarkup: {
+                        keyboard: [
+                          [
+                          { text: "Залишити поле пустим" }
+                          ]
+                        ],
+                        resize_keyboard: true,
+                        one_time_keyboard: true
+                      }
+                    });
+                    step++;
+                    break; 
+                    default:
+                      bot.sendMessage(userId, "Натисніть, будь ласка, одну з кнопок", {
+                        replyMarkup: {
+                          keyboard: [ ["Ім'я", "Вік"], ["Опис", "Пройти реєстрацію заново"], ["Назад"] ],
+                          resize_keyboard: true,
+                          one_time_keyboard: true
+                        }
+                      });
+                      break;
+                }
+                break;
+              case 1:
+                if (msg.text != undefined && msg.from.id == userId) {
+                  if (msg.text == 'Залишити поле пустим' && inChange == "description") user[`${inChange}`] = "";
+                  else {
+                    user[`${inChange}`] = msg.text;
+                  }
+                  db.updateData(user);
+                  bot.sendMessage(userId, "Дані успішно оновлені!", {
+                    replyMarkup: {
+                      remove_keyboard: true
+                    }
+                  });
+                }
+                step++;
+                isChange = false;
+                inChange = "";
+                setTimeout(() => {
+                  changeProfile(msg);
+                }, 500);
+                break;
+            }
+          }
+        }
+
+      }
+      
+    })
+  });
+  
 }
               
 
